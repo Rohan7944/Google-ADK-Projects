@@ -87,6 +87,7 @@ def query_rag_corpus(
         corpus_name=corpus_name,
         query=query,
         retrieval_config=retrieval_config,
+        filter=rag.Filter(vector_distance_threshold=0.5),
     )
 
     logger.info(f"Retrieved {len(response.contexts)} contexts")
