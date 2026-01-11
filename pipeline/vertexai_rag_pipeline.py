@@ -133,6 +133,7 @@ def import_to_rag_corpus(corpus_name: str, paths: List[str]):
         corpus_name,
         paths,
         transformation_config=transformation_config,
+        max_embedding_requests_per_min=1000,
     )
 
     logger.info("Import operation completed successfully")
