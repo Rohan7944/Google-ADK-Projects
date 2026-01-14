@@ -12,6 +12,7 @@ from google.adk.runners import Runner
 from google.adk.sessions import VertexAiSessionService
 from google.adk.memory import VertexAiMemoryBankService
 from google.adk.tools.preload_memory_tool import PreloadMemoryTool
+# from google.adk.tools.load_memory_tool import LoadMemoryTool
 
 # ------------------------------------------------------------------
 # Logging
@@ -95,7 +96,9 @@ agent = LlmAgent(
         "When the user shares stable preferences or personal facts, "
         "acknowledge them naturally."
     ),
-    tools=[PreloadMemoryTool()],
+    tools=[PreloadMemoryTool(),
+        #    LoadMemoryTool() # Un-comment if you want to agent to decide whether the memory tool should be invoked.
+        ],
     after_agent_callback=auto_save_session_to_memory_callback,
 )
 
@@ -117,7 +120,7 @@ def get_or_create_agent_engine(client):
 
         logger.info("No existing engine ID found, creating new Agent Engine")
 
-        engine = client.agent_engines.create(
+        engine = client.agent_engines.create( # Can use .update to update the agent engine
             config={
                 "context_spec": {
                     "memory_bank_config": {
