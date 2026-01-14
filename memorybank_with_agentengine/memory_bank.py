@@ -119,18 +119,45 @@ def get_or_create_agent_engine(client):
             return engine_id
 
         logger.info("No existing engine ID found, creating new Agent Engine")
+        
+        memory_bank_config = {
+            # "customization_config": {
+            #     # "enable_third_person_memories": True,
+            #     "memory_topics": [
+            #         { "managed_memory_topic": { "managed_topic_enum": "USER_PERSONAL_INFO" } },
+            #         # { "managed_memory_topic": { "managed_topic_enum": "USER_PREFERENCES" } },
+            #         # { "managed_memory_topic": { "managed_topic_enum": "KEY_CONVERSATION_DETAILS" } },
+            #         { "managed_memory_topic": { "managed_topic_enum": "EXPLICIT_INSTRUCTIONS" } },
+            #         { "custom_memory_topic": {
+            #             "label": "business_feedback",
+            #             "description": """Specific user feedback about their experience at
+            #             the coffee shop. This includes opinions on drinks, food, pastries, ambiance,
+            #             staff friendliness, service speed, cleanliness, and any suggestions for
+            #             improvement.""" }
+            #         }
+            #     ]
+            # },
+            "generation_config": {
+                "model": (
+                    f"projects/{PROJECT_ID}/locations/{LOCATION}"
+                    f"/publishers/google/models/{MODEL_NAME}"
+                )
+            },
+            "similarity_search_config": {
+                "embedding_model": (
+                    f"projects/{PROJECT_ID}/locations/{LOCATION}"
+                    f"/publishers/google/models/text-embedding-005"
+                )
+            },
+            "ttl_config": {
+                "default_ttl": f"25920000s" # One month, Granular (per-operation) TTL also available
+            }
+        }
 
         engine = client.agent_engines.create( # Can use .update to update the agent engine
             config={
                 "context_spec": {
-                    "memory_bank_config": {
-                        "generation_config": {
-                            "model": (
-                                f"projects/{PROJECT_ID}/locations/{LOCATION}"
-                                f"/publishers/google/models/{MODEL_NAME}"
-                            )
-                        }
-                    }
+                    "memory_bank_config": memory_bank_config
                 }
             }
         )
