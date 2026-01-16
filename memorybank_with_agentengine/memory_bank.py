@@ -14,6 +14,12 @@ from google.adk.memory import VertexAiMemoryBankService
 from google.adk.tools.preload_memory_tool import PreloadMemoryTool
 # from google.adk.tools.load_memory_tool import LoadMemoryTool
 
+# from vertexai.types import MemoryBankCustomizationConfig as CustomizationConfig
+# from vertexai.types import MemoryBankCustomizationConfigMemoryTopic as MemoryTopic
+# from vertexai.types import MemoryBankCustomizationConfigMemoryTopicCustomMemoryTopic as CustomMemoryTopic
+# from vertexai.types import MemoryBankCustomizationConfigMemoryTopicManagedMemoryTopic as ManagedMemoryTopic
+# from vertexai.types import ManagedTopicEnum
+
 # ------------------------------------------------------------------
 # Logging
 # ------------------------------------------------------------------
@@ -120,23 +126,26 @@ def get_or_create_agent_engine(client):
 
         logger.info("No existing engine ID found, creating new Agent Engine")
         
+        # customization_config = CustomizationConfig(
+        #     memory_topics=[
+        #         MemoryTopic(
+        #             managed_memory_topic=ManagedMemoryTopic(
+        #                 managed_topic_enum=ManagedTopicEnum.USER_PERSONAL_INFO)
+        #             ),
+        #         MemoryTopic(
+        #             custom_memory_topic=CustomMemoryTopic(
+        #                 label="business_feedback",
+        #                 description="""Specific user feedback about their experience at
+        #                 the coffee shop. This includes opinions on drinks, food, pastries, ambiance,
+        #                 staff friendliness, service speed, cleanliness, and any suggestions for
+        #                 improvement."""
+        #             )
+        #         )
+        #     ]
+        # )
+        
         memory_bank_config = {
-            # "customization_config": {
-            #     # "enable_third_person_memories": True,
-            #     "memory_topics": [
-            #         { "managed_memory_topic": { "managed_topic_enum": "USER_PERSONAL_INFO" } },
-            #         # { "managed_memory_topic": { "managed_topic_enum": "USER_PREFERENCES" } },
-            #         # { "managed_memory_topic": { "managed_topic_enum": "KEY_CONVERSATION_DETAILS" } },
-            #         { "managed_memory_topic": { "managed_topic_enum": "EXPLICIT_INSTRUCTIONS" } },
-            #         { "custom_memory_topic": {
-            #             "label": "business_feedback",
-            #             "description": """Specific user feedback about their experience at
-            #             the coffee shop. This includes opinions on drinks, food, pastries, ambiance,
-            #             staff friendliness, service speed, cleanliness, and any suggestions for
-            #             improvement.""" }
-            #         }
-            #     ]
-            # },
+            # "customization_config" : customization_config,
             "generation_config": {
                 "model": (
                     f"projects/{PROJECT_ID}/locations/{LOCATION}"
