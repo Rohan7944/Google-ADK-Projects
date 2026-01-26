@@ -45,6 +45,7 @@ load_dotenv()
 REQUIRED_ENV_VARS = [
     "GOOGLE_CLOUD_PROJECT",
     "GOOGLE_CLOUD_LOCATION",
+    "GOOGLE_GENAI_USE_VERTEXAI", 
 ]
 
 try:
@@ -55,8 +56,9 @@ except Exception:
     logger.exception("Environment validation failed")
     raise
 
-PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT")
-LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION")
+PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT") # Valid project needed
+LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION") # Valid location
+USE_VERTEXAI = os.getenv("GOOGLE_GENAI_USE_VERTEXAI") # Should be set as 1 or True
 
 USER_NAME = "Rohan"
 APP_NAME = "simple_chat_agent"
@@ -64,10 +66,11 @@ MODEL_NAME = "gemini-2.5-flash"
 ENGINE_ID_FILE = "agent_engine_id.txt"
 
 logger.info(
-    "Environment validated | project=%s | location=%s | user=%s",
+    "Environment validated | project=%s | location=%s | user=%s | USE_VERTEXAI=%s",
     PROJECT_ID,
     LOCATION,
     USER_NAME,
+    USE_VERTEXAI,
 )
 
 # ------------------------------------------------------------------
