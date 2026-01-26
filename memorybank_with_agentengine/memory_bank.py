@@ -14,11 +14,16 @@ from google.adk.memory import VertexAiMemoryBankService
 from google.adk.tools.preload_memory_tool import PreloadMemoryTool
 # from google.adk.tools.load_memory_tool import LoadMemoryTool
 
-# from vertexai.types import MemoryBankCustomizationConfig as CustomizationConfig
-# from vertexai.types import MemoryBankCustomizationConfigMemoryTopic as MemoryTopic
-# from vertexai.types import MemoryBankCustomizationConfigMemoryTopicCustomMemoryTopic as CustomMemoryTopic
-# from vertexai.types import MemoryBankCustomizationConfigMemoryTopicManagedMemoryTopic as ManagedMemoryTopic
-# from vertexai.types import ManagedTopicEnum
+from vertexai import types as t
+MemoryBankConfig = t.ReasoningEngineContextSpecMemoryBankConfig
+CustomizationConfig = t.MemoryBankCustomizationConfig
+SimilaritySearchConfig = t.ReasoningEngineContextSpecMemoryBankConfigSimilaritySearchConfig
+GenerationConfig = t.ReasoningEngineContextSpecMemoryBankConfigGenerationConfig
+TtlConfig = t.ReasoningEngineContextSpecMemoryBankConfigTtlConfig
+MemoryTopic = t.MemoryBankCustomizationConfigMemoryTopic
+CustomMemoryTopic = t.MemoryBankCustomizationConfigMemoryTopicCustomMemoryTopic
+ManagedMemoryTopic = t.MemoryBankCustomizationConfigMemoryTopicManagedMemoryTopic
+ManagedTopicEnum = t.ManagedTopicEnum
 
 # ------------------------------------------------------------------
 # Logging
@@ -126,47 +131,48 @@ def get_or_create_agent_engine(client):
 
         logger.info("No existing engine ID found, creating new Agent Engine")
         
-        # customization_config = CustomizationConfig(
-        #     memory_topics=[
-        #         MemoryTopic(
-        #             managed_memory_topic=ManagedMemoryTopic(
-        #                 managed_topic_enum=ManagedTopicEnum.USER_PERSONAL_INFO)
-        #             ),
-        #         MemoryTopic(
-        #             custom_memory_topic=CustomMemoryTopic(
-        #                 label="business_feedback",
-        #                 description="""Specific user feedback about their experience at
-        #                 the coffee shop. This includes opinions on drinks, food, pastries, ambiance,
-        #                 staff friendliness, service speed, cleanliness, and any suggestions for
-        #                 improvement."""
-        #             )
-        #         )
-        #     ]
-        # )
-        
-        memory_bank_config = {
-            # "customization_config" : customization_config,
-            "generation_config": {
-                "model": (
-                    f"projects/{PROJECT_ID}/locations/{LOCATION}"
-                    f"/publishers/google/models/{MODEL_NAME}"
+        customization_config = CustomizationConfig(
+            memory_topics=[
+                MemoryTopic(
+                    managed_memory_topic=ManagedMemoryTopic(
+                        managed_topic_enum=ManagedTopicEnum.USER_PERSONAL_INFO)
+                    ),
+                MemoryTopic(
+                    custom_memory_topic=CustomMemoryTopic(
+                        label="business_feedback",
+                        description="""Specific user feedback about their experience at
+                        the coffee shop. This includes opinions on drinks, food, pastries, ambiance,
+                        staff friendliness, service speed, cleanliness, and any suggestions for
+                        improvement."""
+                    )
                 )
-            },
-            "similarity_search_config": {
-                "embedding_model": (
+            ]
+        )
+        
+        memory_config = MemoryBankConfig(
+            customization_configs = [customization_config],
+            similarity_search_config = SimilaritySearchConfig(
+                embedding_model=(
                     f"projects/{PROJECT_ID}/locations/{LOCATION}"
                     f"/publishers/google/models/text-embedding-005"
                 )
-            },
-            "ttl_config": {
-                "default_ttl": f"25920000s" # One month, Granular (per-operation) TTL also available
-            }
-        }
+            ),
+            generation_config=GenerationConfig(
+                model=(
+                    f"projects/{PROJECT_ID}/locations/{LOCATION}"
+                    f"/publishers/google/models/{MODEL_NAME}"
+                )
+            ),
+            ttl_config=TtlConfig(
+                default_ttl=f"25920000s" # One month, Granular (per-operation) TTL also available
+            )
+        )
 
         engine = client.agent_engines.create( # Can use .update to update the agent engine
             config={
+                "display_name": APP_NAME,
                 "context_spec": {
-                    "memory_bank_config": memory_bank_config
+                    "memory_bank_config": memory_config
                 }
             }
         )
