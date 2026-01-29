@@ -1,7 +1,34 @@
-from fastapi import FastAPI, HTTPException
-from typing import  Dict
+from fastapi import FastAPI, HTTPException, Depends, Security
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from typing import Dict
 
 app = FastAPI(title="Sample Weather API", version="1.0")
+
+# -------------------------------------------------
+# Security (Bearer Token)
+# -------------------------------------------------
+
+security = HTTPBearer()
+
+# Example static token (replace with real validation logic)
+VALID_TOKEN = "my-secret-token"
+
+
+def verify_bearer_token(
+    credentials: HTTPAuthorizationCredentials = Security(security),
+):
+    """
+    Verifies Bearer token from Authorization header.
+    Header format: Authorization: Bearer <token>
+    """
+    if credentials.scheme != "Bearer":
+        raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+
+    if credentials.credentials != VALID_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    return credentials.credentials
+
 
 # -------------------------------------------------
 # Sample Weather Data (Mock)
@@ -41,11 +68,14 @@ weather_data: Dict[str, Dict] = {
 }
 
 # -------------------------------------------------
-# API Endpoints
+# API Endpoints (Protected)
 # -------------------------------------------------
 
 @app.get("/temperature/{city}")
-def get_temperature(city: str):
+def get_temperature(
+    city: str,
+    token: str = Depends(verify_bearer_token),
+):
     city_key = city.lower()
     if city_key not in weather_data:
         raise HTTPException(status_code=404, detail="City not found")
@@ -58,7 +88,10 @@ def get_temperature(city: str):
 
 
 @app.get("/forecast/{city}")
-def get_forecast(city: str):
+def get_forecast(
+    city: str,
+    token: str = Depends(verify_bearer_token),
+):
     city_key = city.lower()
     if city_key not in weather_data:
         raise HTTPException(status_code=404, detail="City not found")
