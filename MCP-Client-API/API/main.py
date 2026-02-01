@@ -1,28 +1,34 @@
 from fastapi import FastAPI, HTTPException, Depends, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from typing import Dict
+from typing import Dict, List, Optional
+from pydantic import BaseModel
 
-app = FastAPI(title="Sample Weather API", version="1.0")
+# -------------------------------------------------
+# App
+# -------------------------------------------------
+
+app = FastAPI(
+    title="Sample Weather API",
+    version="1.0",
+)
 
 # -------------------------------------------------
 # Security (Bearer Token)
 # -------------------------------------------------
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
-# Example static token (replace with real validation logic)
 VALID_TOKEN = "my-secret-token"
 
 
 def verify_bearer_token(
     credentials: HTTPAuthorizationCredentials = Security(security),
-):
-    """
-    Verifies Bearer token from Authorization header.
-    Header format: Authorization: Bearer <token>
-    """
+) -> str:
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+
     if credentials.scheme != "Bearer":
-        raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+        raise HTTPException(status_code=401, detail="Invalid auth scheme")
 
     if credentials.credentials != VALID_TOKEN:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
@@ -31,7 +37,31 @@ def verify_bearer_token(
 
 
 # -------------------------------------------------
-# Sample Weather Data (Mock)
+# Response models
+# -------------------------------------------------
+
+class ForecastDay(BaseModel):
+    day: str
+    temperature: int
+
+
+class TemperatureResponse(BaseModel):
+    city: str
+    temperature: Optional[int] = None
+    unit: Optional[str] = None
+    message: Optional[str] = None
+
+
+class ForecastResponse(BaseModel):
+    city: str
+    forecast_days: Optional[int] = None
+    forecast: Optional[List[ForecastDay]] = None
+    unit: Optional[str] = None
+    message: Optional[str] = None
+
+
+# -------------------------------------------------
+# Mock Weather Data
 # -------------------------------------------------
 
 weather_data: Dict[str, Dict] = {
@@ -71,14 +101,18 @@ weather_data: Dict[str, Dict] = {
 # API Endpoints (Protected)
 # -------------------------------------------------
 
-@app.get("/temperature/{city}")
+@app.get("/temperature/{city}", response_model=TemperatureResponse)
 def get_temperature(
     city: str,
     token: str = Depends(verify_bearer_token),
 ):
     city_key = city.lower()
+
     if city_key not in weather_data:
-        raise HTTPException(status_code=404, detail="City not found")
+        return {
+            "city": city.title(),
+            "message": f"No temperature data available for '{city}'",
+        }
 
     return {
         "city": city.title(),
@@ -87,14 +121,18 @@ def get_temperature(
     }
 
 
-@app.get("/forecast/{city}")
+@app.get("/forecast/{city}", response_model=ForecastResponse)
 def get_forecast(
     city: str,
     token: str = Depends(verify_bearer_token),
 ):
     city_key = city.lower()
+
     if city_key not in weather_data:
-        raise HTTPException(status_code=404, detail="City not found")
+        return {
+            "city": city.title(),
+            "message": f"No forecast data available for '{city}'",
+        }
 
     return {
         "city": city.title(),

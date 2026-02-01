@@ -6,7 +6,6 @@ from fastmcp.client import Client
 # -------------------------------------------------
 
 async def main():
-    # MCP server must already be running in HTTP mode
     async with Client("http://localhost:8080/mcp") as client:
 
         # -------------------------------------------------
