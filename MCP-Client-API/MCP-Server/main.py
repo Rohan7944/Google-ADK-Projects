@@ -1,26 +1,81 @@
-import os
 import requests
 from fastmcp import FastMCP
+from fastmcp.server.middleware import Middleware, MiddlewareContext
+from fastmcp.exceptions import FastMCPError
+from fastmcp.server.dependencies import get_http_headers
+from fastmcp.exceptions import ToolError
 
-# -------------------------------------------------
-# Config (Cloud Run friendly)
-# -------------------------------------------------
+import asyncio
 
-WEATHER_API_BASE_URL = os.environ.get(
-    "WEATHER_API_BASE_URL",
-    "http://localhost:8000",
+from constants import (
+    WEATHER_API_BASE_URL,
+    HEADERS,
+    PORT
 )
 
-BEARER_TOKEN = os.environ.get(
-    "BEARER_TOKEN",
-    "my-secret-token",
-)
+from Client.usage import fetch_user
 
-HEADERS = {
-    "Authorization": f"Bearer {BEARER_TOKEN}"
-}
+# -------------------------------------------------
+# Authentication
+# -------------------------------------------------
 
-PORT = int(os.environ.get("PORT", "8080"))
+class UserAuthMiddleware(Middleware):
+
+    async def on_request(self, context: MiddlewareContext, call_next):
+        
+        headers = get_http_headers()
+        header = headers.get("authorization")
+        if not header or not header.startswith("Bearer "):
+            raise FastMCPError("Missing or invalid Authorization header")
+
+        token = header.removeprefix("Bearer ").strip()
+
+        user = await self.verify_token(token)
+        if not user:
+            raise FastMCPError("Invalid bearer token")
+
+        # Attach user info to context (official pattern)
+        context.fastmcp_context.set_state("user", user)
+
+        return await call_next(context)
+    
+    async def verify_token(self, token: str):
+        await asyncio.sleep(1)
+        return fetch_user(token)
+
+    async def on_list_tools(self, context: MiddlewareContext, call_next):
+        print("Inside on_list_tools")
+        
+        user = context.fastmcp_context.get_state("user")
+        allowed_tags = user["allowed_tags"]
+        filtered_list = []
+        if not allowed_tags:
+            return filtered_list
+        tools = await call_next(context)
+        print("Tools before filter:", [tool.name for tool in tools])
+        
+        for tool in tools:
+            tags = getattr(tool,"tags",None) or set()
+            print(f"Tool {tool.name} has tags {tags}")
+            if set(allowed_tags).intersection(tags):
+                filtered_list.append(tool)
+        print("Tools after filter:", [tool.name for tool in filtered_list])
+        
+        return filtered_list
+
+    async def on_call_tool(self, context: MiddlewareContext, call_next):
+        print("Inside on_call_tool")
+        
+        user = context.fastmcp_context.get_state("user")
+        allowed_tags = user["allowed_tags"]
+        tool_object = await context.fastmcp_context.fastmcp.get_tool(context.message.name)
+        tool_tags = tool_object.tags if tool_object else set()
+        print(f"User_roles={allowed_tags}, tool={context.message.name}, tool_tags={tool_tags}")
+        
+        if not set(allowed_tags).intersection(tool_tags):
+            raise ToolError(f"Access denied: your roles {allowed_tags} do not match required tags {list(tool_tags)}")
+
+        return await call_next(context)
 
 # -------------------------------------------------
 # MCP Server
@@ -31,11 +86,13 @@ mcp = FastMCP(
     # description="Weather MCP server for Cloud Run",
 )
 
+mcp.add_middleware(UserAuthMiddleware())
+
 # -------------------------------------------------
 # Tools
 # -------------------------------------------------
 
-@mcp.tool()
+@mcp.tool(tags=["basic"])
 def get_temperature(city: str) -> dict:
     """
     Get current temperature for a city.
@@ -53,7 +110,7 @@ def get_temperature(city: str) -> dict:
         }
 
 
-@mcp.tool()
+@mcp.tool(tags=["premium"])
 def get_forecast(city: str) -> dict:
     """
     Get 5-day weather forecast for a city.

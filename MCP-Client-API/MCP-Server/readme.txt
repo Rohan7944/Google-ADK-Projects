@@ -1,3 +1,5 @@
+For deploying MCP server to GCP Cloud run use this -
+
 gcloud run deploy weather-mcp \
   --source . \
   --region us-central1 \

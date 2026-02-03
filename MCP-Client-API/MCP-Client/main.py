@@ -1,44 +1,37 @@
 import asyncio
-from fastmcp.client import Client
+from fastmcp import Client
 
-# -------------------------------------------------
-# MCP Client (HTTP)
-# -------------------------------------------------
+MCP_SERVER_URL = "http://localhost:8080/mcp"
+MCP_ACCESS_TOKEN = "token-premium"  # Change your access token here
 
 async def main():
-    async with Client("http://localhost:8080/mcp") as client:
+    
+    try:
+        async with Client(
+            MCP_SERVER_URL,
+            auth=MCP_ACCESS_TOKEN,
+        ) as client:
+            
+            try:
+                tools = await client.list_tools()
+                print("Available tools:", [t.name for t in tools])
+            except Exception as e:
+                print(f"Errored while accessing list tools: {e}")
+                
+            try:
+                temp = await client.call_tool("get_temperature", {"city": "delhi"})
+                print("Temperature:", temp)
+            except Exception as e:
+                print(f"Errored while accessing get_temperature tool: {e}")
 
-        # -------------------------------------------------
-        # List available tools
-        # -------------------------------------------------
-        tools = await client.list_tools()
-
-        print("Available tools:")
-        for tool in tools:
-            print(f"- {tool.name}: {tool.description}")
-
-        # -------------------------------------------------
-        # Call get_temperature
-        # -------------------------------------------------
-        temperature = await client.call_tool(
-            "get_temperature",
-            {"city": "Delhi"},
-        )
-
-        print("\nTemperature Result:")
-        print(temperature)
-
-        # -------------------------------------------------
-        # Call get_forecast
-        # -------------------------------------------------
-        forecast = await client.call_tool(
-            "get_forecast",
-            {"city": "Mumbai"},
-        )
-
-        print("\nForecast Result:")
-        print(forecast)
-
+            try:
+                forecast = await client.call_tool("get_forecast", {"city": "delhi"})
+                print("Forecast:", forecast)
+            except Exception as e:
+                print(f"Errored while accessing get_forecast tool: {e}")
+                
+    except Exception as e:
+        print(f"Errored while connecting to MCP server: {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -17,16 +17,16 @@ app = FastAPI(
 # -------------------------------------------------
 
 USER_DB: Dict[str, Dict] = {
-    "token-basic": {
-        "user_id": "user_basic",
+    "token-basic": { # Token to be compared
+        "user_id": "user_basic", # User information passed
         "allowed_tags": {"basic"},
     },
-    "token-premium": {
-        "user_id": "user_premium",
+    "token-premium": { # Token to be compared
+        "user_id": "user_premium", # User information passed
         "allowed_tags": {"basic", "premium"},
     },
-    "token-mid": {
-        "user_id": "user_mid",
+    "token-mid": { # Token to be compared
+        "user_id": "user_mid", # User information passed
         "allowed_tags": set(),
     },
 }
@@ -93,3 +93,12 @@ def get_user_info(
         "user_id": user_data["user_id"],
         "allowed_tags": user_data["allowed_tags"],
     }
+
+if __name__=="__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="127.0.0.1",
+        port=9001,
+        reload=True,
+    )

@@ -1,7 +1,6 @@
 import requests
 from typing import Dict, Any
 
-
 class UserApiClient:
     def __init__(self, base_url: str, token: str):
         """

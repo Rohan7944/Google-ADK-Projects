@@ -140,3 +140,12 @@ def get_forecast(
         "forecast": weather_data[city_key]["forecast"],
         "unit": "°C",
     }
+    
+if __name__=="__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="127.0.0.1",
+        port=9000,
+        reload=True,
+    )
