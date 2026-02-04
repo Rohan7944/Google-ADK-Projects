@@ -1,0 +1,10 @@
+npx create-react-app frontend
+cd frontend
+
+Then overwrite only:
+
+src/App.js
+
+src/Chat.js
+
+src/api.js
