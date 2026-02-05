@@ -13,37 +13,63 @@ export default function App() {
   // Create session on load
   // --------------------------------------------------
   useEffect(() => {
+    console.log("[UI] App loaded");
+    console.log("[UI] Creating session for user:", USER_ID);
+
     fetch(`${API_BASE}/api/session`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: USER_ID }),
     })
-      .then((res) => res.json())
-      .then((data) => setSessionId(data.session_id));
+      .then((res) => {
+        console.log("[UI] Session API response status:", res.status);
+        return res.json();
+      })
+      .then((data) => {
+        console.log("[UI] Session created:", data.session_id);
+        setSessionId(data.session_id);
+      })
+      .catch((err) => {
+        console.error("[UI] Failed to create session", err);
+      });
   }, []);
 
   // --------------------------------------------------
   // Send message
   // --------------------------------------------------
   const sendMessage = async () => {
-    if (!input || !sessionId) return;
+    if (!input || !sessionId) {
+      console.warn("[UI] Cannot send message: missing input or session");
+      return;
+    }
+
+    console.log("[UI] Sending message:", input);
 
     setMessages((prev) => [...prev, { role: "user", text: input }]);
     setInput("");
     setLoading(true);
 
-    const res = await fetch(`${API_BASE}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        session_id: sessionId,
-        message: input,
-      }),
-    });
+    try {
+      const res = await fetch(`${API_BASE}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionId,
+          message: input,
+        }),
+      });
 
-    const data = await res.json();
-    setMessages((prev) => [...prev, { role: "agent", text: data.reply }]);
-    setLoading(false);
+      console.log("[UI] Chat API response status:", res.status);
+
+      const data = await res.json();
+      console.log("[UI] Agent reply:", data.reply);
+
+      setMessages((prev) => [...prev, { role: "agent", text: data.reply }]);
+    } catch (err) {
+      console.error("[UI] Chat request failed", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,18 +78,20 @@ export default function App() {
 
       {!sessionId && <p>Creating session…</p>}
 
-      <div style={{
-        border: "1px solid #ddd",
-        height: 400,
-        padding: 12,
-        overflowY: "auto"
-      }}>
+      <div
+        style={{
+          border: "1px solid #ddd",
+          height: 400,
+          padding: 12,
+          overflowY: "auto",
+        }}
+      >
         {messages.map((m, i) => (
           <div
             key={i}
             style={{
               textAlign: m.role === "user" ? "right" : "left",
-              marginBottom: 8
+              marginBottom: 8,
             }}
           >
             <b>{m.role}:</b> {m.text}
