@@ -1,10 +1,5 @@
-npx create-react-app frontend
+npm create vite@latest frontend -- --template react
 cd frontend
+npm install
 
-Then overwrite only:
-
-src/App.js
-
-src/Chat.js
-
-src/api.js
+To run - npm run dev
