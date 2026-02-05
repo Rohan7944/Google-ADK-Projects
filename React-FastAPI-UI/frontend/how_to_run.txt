@@ -1,5 +1,5 @@
-npm create vite@latest frontend -- --template react
-cd frontend
+npx create-react-app vertex-agent-ui
+cd vertex-agent-ui
 npm install
 
-To run - npm run dev
+npm start
