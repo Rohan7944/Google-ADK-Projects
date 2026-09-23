@@ -16,15 +16,19 @@ Create or replace .github/workflows/deploy-adk.yml. This script specifically ide
 
 B. Valid Directory Structure Required by ADK
 
-For the adk deploy cloud_run command to function correctly, your repository structure must match the expectations of the underlying buildpack:
+To deploy your agent seamlessly using the `adk deploy cloud_run` workflow, your repository must follow this specific structural blueprint. The ADK deployment tool expects a target module directory containing an `__init__.py` file that explicitly exposes your configured agent.
 
-├── requirements.txt           # Must include 'google-adk'
-
+```text
+.
+├── .github/
+│   └── workflows/
+│       └── deploy-adk.yml     # The GitHub Actions workflow file
+├── requirements.txt           # Main project dependencies (must include google-adk)
 └── src/
-    └── my_adk_agent/          # Matches AGENT_PATH in the workflow
-        ├── __init__.py        # Must contain: from . import agent
-        └── agent.py           # Must define your 'root_agent' object
-
+    └── my_adk_agent/          # Root directory for your agent module
+        ├── __init__.py        # Exposes the agent to the ADK buildpack
+        └── agent.py           # Contains the core Agent instantiation logic
+```
 
 How it Works Behind the Scenes
 
