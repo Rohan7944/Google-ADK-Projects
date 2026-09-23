@@ -1,0 +1,44 @@
+name: Run Google ADK Agent
+
+on:
+  # Allows manual triggering from the GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'Input prompt or task for the ADK agent'
+        required: true
+        default: 'Hello! Introduce yourself.'
+  # Optional: Schedule it to run at a specific time (e.g., daily)
+  # schedule:
+  #   - cron: '0 0 * * *'
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/actions-setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip' # Caches dependencies to speed up future runs
+
+      - name: Install Dependencies
+        run: |
+          python -m pip upgrade pip
+          # Installs the Google ADK and any local project requirements
+          pip install google-adk
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run ADK Agent
+        env:
+          # Injects your API Key securely from GitHub Repository Secrets
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          # Ensures standard Python output prints immediately to the GitHub logs
+          PYTHONUNBUFFERED: "1"
+        run: |
+          # Pass the workflow dispatch input directly to your script
+          python run_agent.py --prompt "${{ github.event.inputs.prompt }}"
