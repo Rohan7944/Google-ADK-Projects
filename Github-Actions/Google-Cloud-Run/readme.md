@@ -19,6 +19,7 @@ B. Valid Directory Structure Required by ADK
 For the adk deploy cloud_run command to function correctly, your repository structure must match the expectations of the underlying buildpack:
 
 ├── requirements.txt           # Must include 'google-adk'
+
 └── src/
     └── my_adk_agent/          # Matches AGENT_PATH in the workflow
         ├── __init__.py        # Must contain: from . import agent
