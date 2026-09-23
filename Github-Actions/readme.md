@@ -15,3 +15,6 @@ To make this work seamlessly without leaking your private credentials:
 4. Set the Name to GOOGLE_API_KEY.
 5. Set the Value to your actual key from Google AI Studio.
 6. Click Add secret
+
+Here is the file(workflows-run-adk-agent-pr.yml) configured to trigger automatically on push or pull request events, rather than just waiting for a manual trigger.
+To prevent unnecessary API costs and runaway cycles, this setup targets changes on specific branches (main or developer) and monitors changes made specifically to your codebase or configuration folders.
