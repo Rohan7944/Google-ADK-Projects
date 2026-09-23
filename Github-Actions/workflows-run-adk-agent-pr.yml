@@ -1,0 +1,68 @@
+name: Run Google ADK Agent
+
+on:
+  # Keeps the manual run option available for ad-hoc tests
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'Input prompt or task for the ADK agent'
+        required: true
+        default: 'Hello! Run project status validation.'
+
+  # Triggers the agent automatically when code updates
+  push:
+    branches:
+      - main
+      - developer
+    paths:
+      - 'src/**'            # Only runs if files in source directory change
+      - 'requirements.txt'  # Or if dependency files change
+
+  # Triggers the agent on incoming pull requests
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize]
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/actions-setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-adk
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run ADK Agent & Generate Log Files
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          PYTHONUNBUFFERED: "1"
+        run: |
+          mkdir -p agent_outputs
+          
+          # Check if the run was manual (workflow_dispatch) vs automatic (push/PR)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            PROMPT="${{ github.event.inputs.prompt }}"
+          else
+            PROMPT="Event triggered by ${{ github.event_name }} on branch ${{ github.ref_name }}. Review the latest changes."
+          fi
+          
+          python run_agent.py --prompt "$PROMPT" --output-dir agent_outputs
+
+      - name: Upload Agent Execution Logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: adk-agent-results
+          path: agent_outputs/
+          retention-days: 7
