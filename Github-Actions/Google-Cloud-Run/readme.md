@@ -19,7 +19,6 @@ B. Valid Directory Structure Required by ADK
 To deploy your agent seamlessly using the `adk deploy cloud_run` workflow, your repository must follow this specific structural blueprint. The ADK deployment tool expects a target module directory containing an `__init__.py` file that explicitly exposes your configured agent.
 
 ```text
-.
 ├── .github/
 │   └── workflows/
 │       └── deploy-adk.yml     # The GitHub Actions workflow file
