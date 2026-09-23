@@ -1,0 +1,70 @@
+name: Deploy Google ADK Agent to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'            # Only deploys if files in your agent directory change
+      - 'requirements.txt'
+  pull_request:
+    branches:
+      - main
+    types: [closed]         # Triggers when a PR is closed (merged or canceled)
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: 'us-central1'
+  AGENT_PATH: 'src/my_adk_agent' # Path containing your __init__.py and agent.py
+
+jobs:
+  deploy-agent:
+    # Crucial conditional: run if it was a direct push OR if it was a PR that successfully MERGED
+    if: github.event_name == 'push' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write' # Mandatory for authenticating via Workload Identity OIDC
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 1. Authenticate with GCP via OIDC tokens (No static JSON keys needed)
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+
+      # 2. Configure Cloud SDK
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # 3. Provision Python Environment
+      - name: Set up Python
+        uses: actions/actions-setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # 4. Install ADK Framework CLI
+      - name: Install Google ADK
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-adk
+
+      # 5. Build, Package, and Deploy Agent using the official ADK CLI
+      - name: Deploy to Cloud Run
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          # Bypasses the interactive deployment prompts natively by piping yes
+          yes | adk deploy cloud_run \
+            --project=${{ env.PROJECT_ID }} \
+            --region=${{ env.REGION }} \
+            --service_name="prod-adk-agent" \
+            --with_ui \
+            --trace-to-cloud \
+            ${{ env.AGENT_PATH }}
+            
