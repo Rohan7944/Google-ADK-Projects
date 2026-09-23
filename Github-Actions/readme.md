@@ -17,8 +17,11 @@ To make this work seamlessly without leaking your private credentials:
 6. Click Add secret
 
 Here is the file(workflows-run-adk-agent-pr.yml) configured to trigger automatically on push or pull request events, rather than just waiting for a manual trigger.
+
 To prevent unnecessary API costs and runaway cycles, this setup targets changes on specific branches (main or developer) and monitors changes made specifically to your codebase or configuration folders.
 
 What Changes Here?
-Conditional Prompt Logic: In the Run ADK Agent step, a quick bash check determines how the workflow started. If it's a push or pull request, it constructs an automated prompt informing the agent about the execution context.
-Path Filtering (paths): It restricts execution so the model won't run (and consume API tokens) if you are merely updating documentation or editing the .gitignore file.
+
+1. Conditional Prompt Logic: In the Run ADK Agent step, a quick bash check determines how the workflow started. If it's a push or pull request, it constructs an automated prompt informing the agent about the execution context.
+   
+2. Path Filtering (paths): It restricts execution so the model won't run (and consume API tokens) if you are merely updating documentation or editing the .gitignore file.
